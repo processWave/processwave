@@ -1,0 +1,61 @@
+<Module>
+	<ModulePrefs title="Oryx" height="550">
+		<Require feature="wave" />
+        <Require feature="dynamic-height"/>
+	</ModulePrefs>
+	<Content type="html">
+	<![CDATA[
+	<html>
+        <head>
+        
+        <!-- ATTENTION ! If you change the included JavaScript files make sure to also change the build.xml (around line 200) accordingly!-->
+        
+        <link rel="stylesheet" href="http://code.processwave.org/raw-file/default/gadget/static/jquery-ui-1.8.custom.css" type="text/css"/>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/console.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/LAB.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/jquery-1.4.2.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/jquery.cookies.2.2.0.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/jquery-ui-1.8.custom.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://code.processwave.org/raw-file/default/gadget/static/splash.js" type="text/javascript" charset="utf-8"></script>
+        <style type="text/css">
+            tr.zebra:nth-child(4n) {background-color: lightblue;}
+        </style>
+	</head>
+	<body style="font-size: 12px">
+    <div id="scripts"></div>
+        <div id="header" style="display:none">
+            <div style="float:left" id="branchName"><input type="checkbox" style="visibility:hidden"/></div>
+        </div>        
+        <div id="splashScreen" style="background-image: url(http://code.processwave.org/raw-file/default/gadget/static/splash.png); width: 690px; height: 490px; background-repeat: no-repeat;">
+            <div style="position: relative; top: 300px; left: 150px; text-align: center; width: 400px">
+                <div id="branchSelection" style="display:none;">
+                    <input type="text" id="enteredBranchName" style="font-size: 24px; width: 210px;">
+                    <select id="stencilSet" style="font-size: 24px; width: 130px;">
+                        <option value="uml2.2">UML 2.2</option>
+                        <option value="bpmn2.0">BPMN 2.0</option>
+                        <option value="simpleBPMN2.0">Simple BPMN 2.0</option>
+                        <option value="petrinets">Petri Net</option>
+                        <option value="fmcblockdiagram">FMC</option>
+                        <option value="epc">EPC</option>
+                    </select><br />
+                    <input type="checkbox" id="dancingShapes" value="dancingShapes" />Show dancing shapes
+                    <br />
+                    <input type="button" onclick="onBranchLoadButtonClicked()" value="Load..." style="font-size: 20px;" />
+                </div>
+                <div id="progressBar" style="font-size: 16px">
+                    please stand by...<br />
+                    <img src="http://code.processwave.org/raw-file/default/gadget/static/ajax-loader.gif" />
+                    <div id="statusMessage" style="font-size: 11px;display:none"></div>
+                </div>
+            </div>
+        </div>  
+        <div id="oryx" style="display:none">
+            <iframe id="oryxFrame" src="" width="99%" height="550px" style="border: 0px">
+                <p>Your browser does not support iframes.</p>
+            </iframe>
+        </div>
+	</body>
+	</html>
+	]]>
+	</Content> 
+</Module>

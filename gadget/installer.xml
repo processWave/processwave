@@ -1,0 +1,10 @@
+<extension 
+    name="Diagram Editor (dev)"
+    thumbnailUrl="http://code.processwave.org/raw-file/default/gadget/static/processWaveEditor.png"
+    description="Create cool diagrams (UML, BPMN, EPC, FMC, etc.) together with your friends in Google Wave!"> 
+  <author name="processWave.org"/> 
+  <menuHook location="toolbar" text="Add Diagram Editor (dev)"
+      iconUrl="http://code.processwave.org/raw-file/default/gadget/static/processWaveIconDev.png"> 
+    <insertGadget url="http://code.processwave.org/raw-file/default/gadget/oryx.xml"/> 
+  </menuHook> 
+</extension> 
