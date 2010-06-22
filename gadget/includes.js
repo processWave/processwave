@@ -29,7 +29,7 @@
 
 var gJavascripts = ["gadget/adapter.js",
                     "gadget/stencilsetPolice.js",
-                    "gadget/syncroStack.js",
+                    "gadget/syncroWave.js",
                     "gadget/farbrausch.js",
                     "gadget/oryx.js"
                     ];

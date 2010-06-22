@@ -31,8 +31,11 @@
 		<plugin source="wave.js" name="ORYX.Plugins.Wave" />
         <plugin source="farbrausch.js" name="ORYX.Plugins.Farbrausch" />
         <plugin source="syncro.js" name="ORYX.Plugins.Syncro" />
+        <plugin source="syncro.js" name="ORYX.Plugins.SyncroOryx" />
 		<plugin source="farbrausch_shadow.js" name="ORYX.Plugins.FarbrauschShadow" />
+		<plugin source="farbrausch_afterglow.js" name="ORYX.Plugins.FarbrauschAfterglow" />
 		<plugin source="farbrausch_legend.js" name="ORYX.Plugins.FarbrauschLegend" />
+        <plugin source="shapeTooltip.js" name="ORYX.Plugins.ShapeTooltip" />
 		<plugin source="paint.js" name="ORYX.Plugins.Paint" />
         <plugin source="sideTabs.js" name="ORYX.Plugins.SideTabs"/>
 		<plugin source="propertytab.js" name="ORYX.Plugins.PropertyTab"/>

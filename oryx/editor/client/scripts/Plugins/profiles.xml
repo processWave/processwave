@@ -19,9 +19,12 @@
         <plugin name="ORYX.Plugins.KeysMove"/>
         <plugin name="ORYX.Plugins.Wave"/>
         <plugin name="ORYX.Plugins.Syncro"/>
+        <plugin name="ORYX.Plugins.SyncroOryx"/>
         <plugin name="ORYX.Plugins.Farbrausch"/>
         <plugin name="ORYX.Plugins.FarbrauschLegend"/>
+        <plugin name="ORYX.Plugins.ShapeTooltip"/>
         <plugin name="ORYX.Plugins.FarbrauschShadow"/>
+        <plugin name="ORYX.Plugins.FarbrauschAfterglow"/>
         <plugin name="ORYX.Plugins.WaveGlobalUndo"/>
         <plugin name="ORYX.Plugins.Paint"/>
         <plugin name="ORYX.Plugins.SideTabs"/>

@@ -1302,6 +1302,8 @@ input.text.disabled:hover, input.disabled:hover, select.disabled:hover, textarea
 .x-item-disabled .pw-toolbar-zoom-in { background-position: -572px 0 !important; width: 15px; height: 15px; } 
 .pw-toolbar-zoom-out { background-position: -592px 0 !important; width: 15px; height: 15px; } 
 .x-item-disabled .pw-toolbar-zoom-out { background-position: -612px 0 !important; width: 15px; height: 15px; } 
+.pw-toolbar-export { background-position: -632px 0 !important; width: 15px; height: 15px; } 
+.x-item-disabled .pw-toolbar-export { background-position: -652px 0 !important; width: 15px; height: 15px; } 
 
 .x-btn-center {
   background: transparent;

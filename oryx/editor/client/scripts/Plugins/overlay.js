@@ -342,6 +342,7 @@ ORYX.Plugins.Overlay = Clazz.extend({
         var overlayWidth = temp.svg.getBBox().width;
         var overlayHeight = temp.svg.getBBox().height;
         } catch(e) {
+            //workaround for SVG bug in Firefox
             var xdadsd = 42;
         }
         var curPos, curPosIndex;

@@ -27,28 +27,30 @@
 
 if (!ORYX.Plugins) 
     ORYX.Plugins = new Object();
-    
-    
+
+/**
+* This plugin implements the syncro algorithm for concurrent editing
+**/
+
 ORYX.Plugins.Syncro = Clazz.extend({
-    debug: false,
     facade: undefined,
 
     LAMPORT_OFFSET : 3,
     lamportClock : 1,
     localState : {},
     
-    // Lib (locaState, etc.) has not been initialized yet.
-    initialized : false, 
+    initialized : false, // Lib (locaState, etc.) has not been initialized yet.
     
     construct: function construct(facade) {
         this.facade = facade;
         
         this.facade.registerOnEvent(ORYX.CONFIG.EVENT_NEW_POST_MESSAGE_RECEIVED, this.handleNewPostMessageReceived.bind(this));
-        this.facade.registerOnEvent(ORYX.CONFIG.EVENT_AFTER_COMMANDS_EXECUTED, this.handleAfterCommandsExecuted.bind(this));
+        this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SYNCRO_NEW_COMMANDS_FOR_REMOTE_STATE, this.handleNewCommandForRemoteState.bind(this));
     },
     
-/*** public functions ***/
-
+    
+    /** Direction: Wave -> Oryx (New remote commands in Wave State) **/
+    
     handleNewPostMessageReceived: function handleNewPostMessageReceived(event) {
         var data = event.data;
         if (data.target !== "syncroStack") {
@@ -60,6 +62,7 @@ ORYX.Plugins.Syncro = Clazz.extend({
     },
     
     handleRemoteCommands: function handleRemoteCommands(remoteCommands) {
+        // new commands appeared in wave state -> run syncro algorithm
         var remoteCommand;
         var newCommand;
         var localCommand;
@@ -87,13 +90,15 @@ ORYX.Plugins.Syncro = Clazz.extend({
         this.lamportClock = this.getClockValueFromSortedCommands(localCommands);
         
         if (!this.initialized) {
+            // When snycro is not initialized, all comands are new, no need to run algorithm
             this.initialized = true;
-            this.stackInitialized(newCommands);
+            this.sendCommandsToOryx(null, [], newCommands);
+            this.facade.raiseEvent({'type': ORYX.CONFIG.EVENT_SYNCRO_INITIALIZATION_DONE});
             return;
         }
         
         // For each new command find all subsequent applied commands and mark them as to be
-        // reverted. Pass them and the new command to the newCommandCallback function.
+        // reverted. Pass them and the new command to Oryx for execution.
         localCommands.reverse();
         for (var n = 0; n < newCommands.length; n++) {
             newCommand = newCommands[n];
@@ -104,8 +109,8 @@ ORYX.Plugins.Syncro = Clazz.extend({
                 if (localCommand === newCommand) {
                     applyCommands.push(localCommand);
                     applyCommands.reverse();
-                    // Callback
-                    this.newCommand(newCommand, revertCommands, applyCommands);
+                    // pass everythin to Oryx for execution
+                    this.sendCommandsToOryx(newCommand, revertCommands, applyCommands);
                     break;
                 } else if (!this.inArray(localCommand, newCommands)) {
                     // only commands that have already been applied and therefore are not
@@ -118,80 +123,48 @@ ORYX.Plugins.Syncro = Clazz.extend({
 
     },
     
-    stackInitialized: function stackInitialized(stackArray) {
-        for (var i = 0; i < stackArray.length; i++) {
-            var stackItem = stackArray[i];
-            var unpackedCommands = this.unpackToCommands(stackItem);
-            
-            if (unpackedCommands.length !== 0) {
-                this.facade.executeCommands(unpackedCommands);
-            }
-        }
-        
+    sendCommandsToOryx: function sendCommandsToOryx(newCommand, revertCommands, applyCommands) {
         this.facade.raiseEvent({
-            'type': ORYX.CONFIG.EVENT_SYNCRO_INITIALIZATION_DONE
+            'type': ORYX.CONFIG.EVENT_SYNCRO_NEW_REMOTE_COMMANDS,
+            'newCommand': newCommand,
+            'revertCommands': revertCommands,
+            'applyCommands': applyCommands,
+            'forceExecution': true
         });
     },
     
-    newCommand: function newCommand(newCommand, revertCommands, applyCommands) {
-        var i;
-        if (this.debug) console.log("-----");
-        
-        for (i = 0; i < revertCommands.length; i++) {
-            if (this.debug) console.log({'revert':revertCommands[i]});
-            
-            var commands = this.getCommandsFromStack(revertCommands[i]);
-            if (typeof commands === "undefined") {
-                commands = this.unpackToCommands(revertCommands[i]);
-            }
-            
-            this.facade.rollbackCommands(commands);
-        }
-        for (i = 0; i < applyCommands.length; i++) {
-            if (this.debug) console.log({'apply':applyCommands[i]});
-            
-            var unpackedCommands = this.unpackToCommands(applyCommands[i]);
-            if (unpackedCommands.length !== 0) {
-                this.facade.executeCommands(unpackedCommands);
-            }
-        }
+    
+    /** Direction: Oryx -> Wave (New local command needs to be pushed into Wave State) **/
+    
+    handleNewCommandForRemoteState: function handleNewCommandForRemoteState(event) {
+        this.pushCommands(event.commands);
     },
     
-    getCommandsFromStack: function getCommandsFromStack(stackItem) {
-        var commandArrayOfStrings = stackItem.commands;
-        var commandDataArray = [];        
+    pushCommands: function pushCommands(commands) {
+        // new commands executed on the local client are pushed into wave state
+        var commandId = this.getNextCommandId();
+        var delta = {
+            'commands': commands,
+            'userId': this.facade.getUserId(),
+            'id': commandId,
+            'clock': this.lamportClock
+        };
         
-        for (var i = 0; i < commandArrayOfStrings.length; i++) {
-            commandDataArray.push(commandArrayOfStrings[i].evalJSON());
-        }
-        
-        if (!commandDataArray[0].putOnStack) {
-            return undefined;
-        }
-        
-        var stack = ORYX.Stacks.undo;
-        var ids = this.getIdsFromCommandArray(commandDataArray);
-        
-        for (i = 0; stack.length; i++) {
-            for (var j = 0; j < ids.length; j++) {
-                if (ids[j] === stack[i][0].getCommandId()) {
-                    return stack[i];
-                }
-            }
-        }
-        
-        return [];
+        // push into local state
+        this.localState[commandId] = delta;
+        // push into wave state
+        this.facade.raiseEvent({
+            'type': ORYX.CONFIG.EVENT_POST_MESSAGE,
+            'target': 'syncroStack',
+            'action': 'save',
+            'message': delta
+        });
+        // adjust Lamport clock for new command
+        this.lamportClock += this.LAMPORT_OFFSET;
     },
     
-    /** private functions **/
     
-    getIdsFromCommandArray: function getIdsFromCommandArray(commandArray) {
-        var commandIds = [];        
-        for (var i = 0; i < commandArray.length; i++) {
-            commandIds.push(commandArray[i].id);
-        }        
-        return commandIds;
-    },
+    /** helper functions **/ 
     
     compareCommands: function compareCommands(command1, command2) {
         // compare-function to sort commands chronologically
@@ -227,21 +200,6 @@ ORYX.Plugins.Syncro = Clazz.extend({
         return this.lamportClock + "\\" + this.facade.getUserId();
     },
     
-    unpackToCommands: function unpackToCommands(stackItem) {
-        var commandArrayOfStrings = stackItem.commands;
-
-        var commandArray = [];
-        for (var i = 0; i < commandArrayOfStrings.length; i++) {
-            var cmdObj = commandArrayOfStrings[i].evalJSON();
-            var commandInstance = ORYX.Core.Commands[cmdObj.name].prototype.jsonDeserialize(this.facade, commandArrayOfStrings[i]);
-            if (typeof commandInstance === 'undefined') {
-                return [];
-            }
-            commandArray.push(commandInstance);
-        }
-
-        return commandArray;
-    },
     
     /** util **/
     
@@ -262,51 +220,6 @@ ORYX.Plugins.Syncro = Clazz.extend({
             }
         }
         return false;
-    },
-    
-    /**
-    * Listens to all commands executed by the editor.
-    * 
-    * Commands that have been constructed locally must be pushed
-    * to the adapter on the other side of the frame in order to
-    * synchronize among all participants. Remote commands are discarded.
-    *
-    * @param {Object} evt
-    */
-    handleAfterCommandsExecuted: function handleAfterCommandsExecuted(evt) {        
-        if (!evt.commands || !evt.commands[0].isLocal()) { 
-            return;
-        }
-
-        var serializedCommands = [];
-        for (var i = 0; i < evt.commands.length; i++) {
-            if (evt.commands[i] instanceof ORYX.Core.AbstractCommand) {
-                serializedCommands.push(evt.commands[i].jsonSerialize());
-            }
-        }
-        
-        this.pushCommands(serializedCommands);
-    },
-    
-    pushCommands: function pushCommands(commands) {
-        var commandId = this.getNextCommandId();
-        var delta = {
-            'commands': commands,
-            'userId': this.facade.getUserId(),
-            'id': commandId,
-            'clock': this.lamportClock
-        };
-        
-        // push into local state
-        this.localState[commandId] = delta;
-        // push into remote state
-        this.facade.raiseEvent({
-            'type': ORYX.CONFIG.EVENT_POST_MESSAGE,
-            'target': 'syncroStack',
-            'action': 'save',
-            'message': delta
-        });
-        this.lamportClock += this.LAMPORT_OFFSET;
     }
     
 });

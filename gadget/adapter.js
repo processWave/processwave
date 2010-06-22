@@ -26,7 +26,7 @@
  **/
 
 var adapter = {
-    allowSwapping: true, //Deaktivate Swapping here for debugging
+    allowSwapping: false, //Deaktivate Swapping here for debugging
     _modeCallbacks: [],
     _participantsCallbacks: [],
     _mode: null,
@@ -41,6 +41,7 @@ var adapter = {
     _GADGET_ID_KEY: "GADGETID",
     _swapEnabled: false,
     _swapablePrefixes: [],
+    _fetchedFromDb: false,
 
     initialize: function initialize(swapEnabled) {
         if (typeof swapEnabled === "boolean" && this.allowSwapping) {
@@ -220,8 +221,11 @@ var adapter = {
             var key = keys[i];
             adapter._gadgetState[key] = wave.getState().get(key);
         }
-        
-        if (adapter._swapEnabled) {
+        if (!adapter._fetchedFromDb && adapter._gadgetState[adapter._GADGET_ID_KEY]) {
+            adapter._setGadgetId();
+            adapter._fetchFromDb();
+            adapter._fetchedFromDb = true;
+        } else if (adapter._swapEnabled) {
             adapter._setGadgetId();
             adapter._fetchFromDb();
         } else {

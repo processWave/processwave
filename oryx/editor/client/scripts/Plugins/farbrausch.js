@@ -67,6 +67,8 @@ ORYX.Plugins.Farbrausch = Clazz.extend({
     },
     
     pickOwnColor: function pickOwnColor() {
+        //it is possible that the mode_changed event arrives before the very first stateUpdated
+        //since we need the information of the stateUpdated-Callback, we have to wait
         if (!this._firstUpdateReceived) {
             setTimeout(this.pickOwnColor.bind(this), 1000 * Math.random());
             return;
