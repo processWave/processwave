@@ -38,7 +38,7 @@ var oryx = {
         oryx._sendUserId();
 
         farbrausch.initialize();
-        syncroStack.initialize();
+        syncroWave.initialize();
         
     },
     

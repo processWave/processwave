@@ -53,7 +53,7 @@ ORYX.Plugins.Syncro = Clazz.extend({
     
     handleNewPostMessageReceived: function handleNewPostMessageReceived(event) {
         var data = event.data;
-        if (data.target !== "syncroStack") {
+        if (data.target !== "syncro") {
             return;
         }
         
@@ -155,7 +155,7 @@ ORYX.Plugins.Syncro = Clazz.extend({
         // push into wave state
         this.facade.raiseEvent({
             'type': ORYX.CONFIG.EVENT_POST_MESSAGE,
-            'target': 'syncroStack',
+            'target': 'syncroWave',
             'action': 'save',
             'message': delta
         });

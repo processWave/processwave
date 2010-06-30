@@ -70,6 +70,12 @@ ORYX.Plugins.Paint = ORYX.Plugins.AbstractPlugin.extend({
         this.facade.registerOnEvent(ORYX.CONFIG.EVENT_MODE_CHANGED, this._onModeChanged.bind(this));
     },
 
+    onLoaded: function onLoaded() {
+        this.paintCanvas = this._createCanvas();
+        this._loadBrush(this.paintCanvas);
+        this.toolbar = this._createToolbar();
+    },
+
     _onModeChanged: function _onModeChanged(event) {
         this.editMode = event.mode.isEditMode();
         if (event.mode.isPaintMode()) {
@@ -112,11 +118,9 @@ ORYX.Plugins.Paint = ORYX.Plugins.AbstractPlugin.extend({
         this._alignCanvasWithOryxCanvas();
     },
     
-    onLoaded: function onLoaded() {
+    _createCanvas: function _createCanvas() {
         var canvas = this.facade.getCanvas();
-        var canvasContainer = canvas.rootNode.parentNode;
 
-        // create paint canvas
         var options = {
             canvasId: "freehand-paint",
             width: canvas.bounds.width(),
@@ -127,22 +131,37 @@ ORYX.Plugins.Paint = ORYX.Plugins.AbstractPlugin.extend({
             getUserIdCallback: function getUserId() { return this.facade.getUserId(); }.bind(this),
             isInEditModeCallback: function isInEditModeCallback() { return this.editMode; }.bind(this)
         };
-        this.paintCanvas = new ORYX.Plugins.Paint.PaintCanvas(options);
-        canvasContainer.appendChild(this.paintCanvas.getDomElement());
+        var paintCanvas = new ORYX.Plugins.Paint.PaintCanvas(options);
 
-        // create toolbar
+        var canvasContainer = canvas.rootNode.parentNode;
+        canvasContainer.appendChild(paintCanvas.getDomElement());
+        return paintCanvas;
+    },
+    
+    _loadBrush : function _loadBrush(paintCanvas) {
+        var img = new Image();
+        img.onload = paintCanvas.setBrush.bind(paintCanvas, img, 2);
+        img.src = this._getBasePath() + "/../oryx/editor/images/paint/brush.png";
+    },
+    
+    _createToolbar: function _createToolbar() {
+        var basePath = this._getBasePath();
+        var toolbar = new ORYX.Plugins.Paint.Toolbar();
+        toolbar.addButton(basePath + "/../oryx/editor/images/paint/line.png",
+                          this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.LineTool));
+        toolbar.addButton(basePath + "/../oryx/editor/images/paint/arrow.png",
+                          this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.ArrowTool));
+        toolbar.addButton(basePath + "/../oryx/editor/images/paint/box.png",
+                          this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.BoxTool));
+        toolbar.addButton(basePath + "/../oryx/editor/images/paint/ellipse.png",
+                          this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.EllipseTool));
+        toolbar.hide();
+        return toolbar;
+    },
+    
+    _getBasePath: function _getBasePath() {
         var lastSlash = window.location.href.lastIndexOf("/");
-        var basePath = window.location.href.substring(0, lastSlash);
-        this.toolbar = new ORYX.Plugins.Paint.Toolbar();
-        this.toolbar.addButton(basePath + "/../oryx/editor/images/paint/line.png",
-                               this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.LineTool));
-        this.toolbar.addButton(basePath + "/../oryx/editor/images/paint/arrow.png",
-                               this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.ArrowTool));
-        this.toolbar.addButton(basePath + "/../oryx/editor/images/paint/box.png",
-                               this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.BoxTool));
-        this.toolbar.addButton(basePath + "/../oryx/editor/images/paint/ellipse.png",
-                               this._activateTool.bind(this, ORYX.Plugins.Paint.PaintCanvas.EllipseTool));
-        this.toolbar.hide();
+        return window.location.href.substring(0, lastSlash);
     },
     
     _togglePaint: function _togglePaint() {
@@ -249,6 +268,7 @@ ORYX.Plugins.Paint.CanvasWrapper = Clazz.extend({
         this.canvas = canvas;
         this.context = canvas.getContext("2d");
         this.scalingFactor = 1.0;
+        this.color = ORYX.CONFIG.FARBRAUSCH_DEFAULT_COLOR;
     },
     
     clear: function clear() {
@@ -273,13 +293,21 @@ ORYX.Plugins.Paint.CanvasWrapper = Clazz.extend({
         this.context.lineJoin = 'round';
         this.context.lineWidth = width;
         this.context.strokeStyle = color;
+        this._setColor(color);
+    },
+    
+    setBrush: function setBrush(brushImage, dist) {
+        this.origBrush = brushImage;
+        this.brush = this._colorBrush(brushImage, this.color);
+        this.brushDist = dist;
     },
     
     drawLine: function drawLine(ax, ay, bx, by) {
-        this.context.beginPath();
-        this.context.moveTo(ax, ay);
-        this.context.lineTo(bx, by);
-        this.context.stroke();
+        (this.brush ? this._brushLine : this._simpleLine).apply(this, arguments);
+    },
+    
+    drawEllipse: function drawLine(ax, ay, bx, by) {
+        (this.brush ? this._brushEllipse : this._simpleEllipse).apply(this, arguments);
     },
     
     drawArrow: function drawArrow(ax, ay, bx, by) {
@@ -299,25 +327,127 @@ ORYX.Plugins.Paint.CanvasWrapper = Clazz.extend({
     },
     
     strokeRect: function strokeRect(x, y, width, height) {
-        this.context.strokeRect(x, y, width, height);
+        this.drawLine(x, y, x + width, y);
+        this.drawLine(x, y + height, x + width, y + height);
+        this.drawLine(x, y, x, y + height);
+        this.drawLine(x + width, y, x + width, y + height);
     },
     
-    strokeEllipse: function strokeEllipse(x1, y1, x2, y2) {
+    _setColor: function _setColor(color) {
+        if (typeof this.origBrush !== "undefined") {
+            this.brush = this._colorBrush(this.origBrush, color);
+        }
+        this.color = color;
+    },
+    
+    _simpleLine: function _simpleLine(ax, ay, bx, by) {
+        this.context.beginPath();
+        this.context.moveTo(ax, ay);
+        this.context.lineTo(bx, by);
+        this.context.stroke();
+    },
+    
+    _brushLine: function _brushLine(ax, ay, bx, by) {
+        var makePoint = function(x, y) { return {x: x, y: y}; };
+        var totalDist = ORYX.Core.Math.getDistancePointToPoint(makePoint(ax, ay), makePoint(bx, by));
+        var steps = totalDist / this.brushDist;
+        
+        var totalVec = makePoint(bx - ax, by - ay);
+        var divide = function(vec, by) { return {x: vec.x / by, y: vec.y / by}; };
+        var delta = divide(totalVec, steps);
+        
+        for (var i = 0; i < steps; i++) {
+            this.context.drawImage(this.brush,
+                                   ax + i * delta.x - this.brush.width / 2,
+                                   ay + i * delta.y - this.brush.height / 2);
+        }
+    },
+    
+    _simpleEllipse: function _simpleEllipse(x1, y1, x2, y2) {
         // code by http://canvaspaint.org/blog/2006/12/ellipse/
+        var ell = this._getEllipseInRectParams.apply(this, arguments);
         var KAPPA = 4 * ((Math.sqrt(2) -1) / 3);
 
-        var rx = (x2 - x1)/2;
-        var ry = (y2 - y1)/2;
-        var cx = x1 + rx;
-        var cy = y1 + ry;
-
         this.context.beginPath();
-        this.context.moveTo(cx, cy - ry);
-        this.context.bezierCurveTo(cx + (KAPPA * rx), cy - ry,  cx + rx, cy - (KAPPA * ry), cx + rx, cy);
-        this.context.bezierCurveTo(cx + rx, cy + (KAPPA * ry), cx + (KAPPA * rx), cy + ry, cx, cy + ry);
-        this.context.bezierCurveTo(cx - (KAPPA * rx), cy + ry, cx - rx, cy + (KAPPA * ry), cx - rx, cy);
-        this.context.bezierCurveTo(cx - rx, cy - (KAPPA * ry), cx - (KAPPA * rx), cy - ry, cx, cy - ry);
+        this.context.moveTo(ell.cx, ell.cy - ell.ry);
+        this.context.bezierCurveTo(ell.cx + (KAPPA * ell.rx), ell.cy - ell.ry, ell.cx + ell.rx, ell.cy - (KAPPA * ell.ry), ell.cx + ell.rx, ell.cy);
+        this.context.bezierCurveTo(ell.cx + ell.rx, ell.cy + (KAPPA * ell.ry), ell.cx + (KAPPA * ell.rx), ell.cy + ell.ry, ell.cx, ell.cy + ell.ry);
+        this.context.bezierCurveTo(ell.cx - (KAPPA * ell.rx), ell.cy + ell.ry, ell.cx - ell.rx, ell.cy + (KAPPA * ell.ry), ell.cx - ell.rx, ell.cy);
+        this.context.bezierCurveTo(ell.cx - ell.rx, ell.cy - (KAPPA * ell.ry), ell.cx - (KAPPA * ell.rx), ell.cy - ell.ry, ell.cx, ell.cy - ell.ry);
         this.context.stroke();
+    },
+    
+    _brushEllipse: function _brushEllipse(x1, y1, x2, y2) {
+        var ell = this._getEllipseInRectParams.apply(this, arguments);
+        var delta = 2 * Math.PI / Math.max(ell.rx, ell.ry);
+
+        var points = [];
+        for (var t = 0; t < 2 * Math.PI; t += delta) {
+            points.push({
+                x: ell.cx + Math.cos(t) * ell.rx,
+                y: ell.cy + Math.sin(t) * ell.ry
+            });
+        }
+
+        var cur, next;
+        for (var i = 0; i < points.length - 1; i++) {
+            cur = points[i];
+            next = points[i + 1];
+            this._brushLine(cur.x, cur.y, next.x, next.y);
+        }
+        this._brushLine(points.last().x, points.last().y, points.first().x, points.first().y);
+    },
+    
+    _getEllipseInRectParams: function _getEllipseInRectParams(x1, y1, x2, y2) {
+        var rx = (x2 - x1) / 2;
+        var ry = (y2 - y1) / 2;
+        return {
+            rx: rx,
+            ry: ry,
+            cx: x1 + rx,
+            cy: y1 + ry 
+        };
+    },
+    
+    _colorBrush: function _colorBrush(brush, color) {
+        var tempCanvas = this._createTempCanvas(brush.width, brush.height);
+        var context = tempCanvas.getContext("2d");
+        context.drawImage(brush, 0, 0);
+        this._recolorCanvas(context, color, brush.width, brush.height);
+        return tempCanvas;
+    },
+    
+    _createTempCanvas: function _createTempCanvas(width, height) {
+        var tempCanvas = document.createElement("canvas");
+        tempCanvas.style.width = width + "px";
+        tempCanvas.style.height = height + "px";
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        return tempCanvas;
+    },
+    
+    _recolorCanvas: function _recolorCanvas(context, color, width, height) {
+        var imgData = context.getImageData(0, 0, width, height);
+        
+        var rgb = this._getRGB(color);
+        var data = imgData.data;
+        for (var i = 0; i < data.length; i += 4) {
+            data[i] = data[i] / 255 * rgb.r;
+            data[i+1] = data[i+1] / 255 * rgb.g;
+            data[i+2] = data[i+2] / 255 * rgb.b;
+        }
+        
+        context.putImageData(imgData, 0, 0);
+    },
+    
+    _getRGB: function _getRGB(hexColor) {
+        var hex = hexColor.substring(1, 7); // cut off leading #
+
+        return {
+            r: parseInt(hex.substring(0, 2), 16),
+            g: parseInt(hex.substring(2, 4), 16),
+            b: parseInt(hex.substring(4, 6), 16)
+        };
     }
 });
 
@@ -367,6 +497,12 @@ ORYX.Plugins.Paint.PaintCanvas = Clazz.extend({
     setTool: function setTool(toolClass) {
         var color = this._getColor(this.getUserIdCallback());
         this.currentAction = new toolClass(this.getUserIdCallback.bind(this), color, this.paintCanvas, this._onShapeDone.bind(this));
+    },
+    
+    setBrush: function setBrush(brushImage, dist) {
+        this.viewCanvas.setBrush(brushImage, dist);
+        this.paintCanvas.setBrush(brushImage, dist);
+        this._redrawShapes();
     },
     
     scale: function scale(factor) {
@@ -794,7 +930,7 @@ ORYX.Plugins.Paint.PaintCanvas.EllipseTool = ORYX.Plugins.Paint.PaintCanvas.TwoP
     
     draw: function draw(canvas, start, end) {
         canvas.setStyle(1, this.getColor());
-        canvas.strokeEllipse(start.left, start.top, end.left, end.top);
+        canvas.drawEllipse(start.left, start.top, end.left, end.top);
     }
 });
 
@@ -812,7 +948,7 @@ ORYX.Plugins.Paint.PaintCanvas.Line = ORYX.Plugins.Paint.PaintCanvas.Shape.exten
     },
 
     draw: function draw(canvas, color, width) {
-        var lines = this._getLines();
+        var lines = this._getLines(this._smooth(this.points));
         
         canvas.setStyle(width || 1, color);
 
@@ -828,34 +964,8 @@ ORYX.Plugins.Paint.PaintCanvas.Line = ORYX.Plugins.Paint.PaintCanvas.Shape.exten
         });
     },
     
-    simplify: function simplify() {
-        var tolerance = 2;
-
-        var newPoints = [];
-        var offset, len, count;
-        len = this.points.length;
-        if (lookAhead > len - 1) {
-            lookAhead = len - 1;
-        }
-        newPoints[0] = {x: this.points[0].x, y: this.points[0].y};
-        count = 1;
-        for (var i = 0; i < len; i++) {
-            if (i + lookAhead >= len) {
-                lookAhead = len - i - 1;
-            }
-            offset = this._recursiveToleranceBar(this.points, i, lookAhead, tolerance);
-            if (offset > 0) {
-                newPoints[count] = {x: this.points[i+offset].x , y: this.points[i+offset].y};
-                i += offset - 1; // don't loop through the skipped points
-                count++;
-            }
-        }
-
-        this.points = newPoints;
-    },
-    
     isUnderCursor: function isUnderCursor(pos) {
-        var lines = this._getLines();        
+        var lines = this._getLines(this.points);
         return lines.any(function isInLine(l) {
             return ORYX.Core.Math.isPointInLine(pos.left, pos.top, l.a.x, l.a.y, l.b.x, l.b.y, 10);
         });
@@ -874,46 +984,67 @@ ORYX.Plugins.Paint.PaintCanvas.Line = ORYX.Plugins.Paint.PaintCanvas.Shape.exten
         return new ORYX.Plugins.Paint.PaintCanvas.Line(obj.creatorId, obj.points, obj.id);
     },
     
-    _getLines: function _getLines() {
-        var i;
+    _getLines: function _getLines(points) {
         var lines = [];
-        
-        for (i = 1; i < this.points.length; i++) {
-            lines.push({ a: this.points[i-1],
-                         b: this.points[i]
-                });
+        for (var i = 1; i < points.length; i++) {
+            lines.push({ a: points[i-1],
+                         b: points[i] });
         }
-        
         return lines;
     },
     
-    _recursiveToleranceBar : function _recursiveToleranceBar(points, i, lookAhead, tolerance) {
-        var n = lookAhead;
-        var cP, cLP, v1, v2, angle, dx, dy;
-        cP = points[i]; // current point
-        // the vector through the current point and the max look ahead point
-        v1 = {x: points[i+n].x - cP.x, y: points[i+n].y - cP.y};
-        // loop through the intermediate points
-        for(var j=1; j<=n; j++){
-            // the vector through the current point and the current intermediate point
-            cLP = points[i+j]; // current look ahead point
-            v2 = {x: cLP.x - cP.x, y: cLP.y - cP.y};
-            angle = Math.acos((v1.x * v2.x + v1.y * v2.y)/(Math.sqrt(v1.y * v1.y + v1.x * v1.x)*Math.sqrt(v2.y * v2.y + v2.x * v2.x)));
-            if (isNaN(angle)) {
-                angle = 0;
+    _smooth: function _smooth(points) {
+        return this._mcMaster(this._fillPoints(points, 5));
+    },
+    
+    _fillPoints: function _fillPoints(points, maxDist) {
+        var out = [points[0]];
+        for (var i = 1; i < points.length; i++) {
+            var pos = points[i];
+            var prevPos = points[i-1];
+            var distX = pos.x - prevPos.x;
+            var distY = pos.y - prevPos.y;
+            var dist = Math.sqrt(distX*distX + distY*distY);
+            
+            if (dist > maxDist) {
+                var pointsToInsert = Math.floor(dist / maxDist);
+                var deltaX = distX / pointsToInsert;
+                var deltaY = distY / pointsToInsert;
+                for (var k = 0; k < pointsToInsert; k++) {
+                    out.push({x: prevPos.x + k * deltaX,
+                              y: prevPos.y + k * deltaY });
+                }
             }
-            // the hypothenuse is the line between the current point and the current intermediate point
-            dx = cP.x - cLP.x; dy = cP.y - cLP.y;
-            var lH = Math.sqrt(dx*dx+dy*dy);// length of hypothenuse
-
-            // length of opposite leg / perpendicular offset    
-            if (Math.sin(angle) * lH >= tolerance) {
-                // too long, exceeds tolerance
-                n--;
-                return n > 0 ? this.recursiveToleranceBar(points, i, n, tolerance) : 0;
+            
+            out.push(pos);
+        }
+        
+        return out;
+    },
+    
+    _mcMaster: function _mcMaster(points) {
+        var out = [];
+        var lookAhead = 10;
+        var halfLookAhead = Math.floor(lookAhead / 2);
+        if (points.length < lookAhead) {
+            return points;
+        }
+        
+        for (var i = points.length - 1; i >= 0; i--) {
+            if (i >= points.length - halfLookAhead || i <= halfLookAhead) {
+                out = [points[i]].concat(out);
+            } else {
+                var accX = 0, accY = 0;
+                for (var k = -halfLookAhead; k < -halfLookAhead + lookAhead; k++) {
+                    accX += points[i + k].x;
+                    accY += points[i + k].y;
+                }
+                out = [{x: accX / lookAhead,
+                        y: accY / lookAhead}].concat(out);
             }
         }
-        return n;
+        
+        return out;
     }
 });
 
@@ -1026,7 +1157,7 @@ ORYX.Plugins.Paint.PaintCanvas.Ellipse = ORYX.Plugins.Paint.PaintCanvas.TwoPoint
 
     draw: function draw(canvas, color, width) {
         canvas.setStyle(width || 1, color);
-        canvas.strokeEllipse(this.start.left, this.start.top, this.end.left, this.end.top);
+        canvas.drawEllipse(this.start.left, this.start.top, this.end.left, this.end.top);
     },
     
     pack: function pack() {

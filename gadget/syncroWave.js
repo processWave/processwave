@@ -25,23 +25,30 @@
  * DEALINGS IN THE SOFTWARE.
  **/
 
-var syncroStack = {    
+ 
+var syncroWave = {
+    /**
+    * This implements the interface between the syncro algorithm (syncro.js) 
+    * and the Wave state
+    **/
     _adapter: undefined,
     
     initialize: function initialize() {
-        syncroStack._adapter = adapter.connect("pw", true);
+        syncroWave._adapter = adapter.connect("pw", true);
     
-        syncroStack._adapter.setStateCallback(syncroStack.stateUpdatedCallback);
-        oryx.addMessageDispatcher("syncroStack", this.dispatcher);
+        syncroWave._adapter.setStateCallback(syncroWave.stateUpdatedCallback);
+        oryx.addMessageDispatcher("syncroWave", this.dispatcher);
     },
     
     stateUpdatedCallback: function stateUpdatedCallback() {
-        oryx.sendMessage("syncroStack", "commands", syncroStack._getStateAsArray());
+        //send all commands in the state to syncro
+        oryx.sendMessage("syncro", "commands", syncroWave._getStateAsArray());
     },
     
     _getStateAsArray: function _getStateAsHash() {
+        // turn state with command objects into an array
         var stateArray = [];
-        var waveState = syncroStack._adapter.getState();
+        var waveState = syncroWave._adapter.getState();
         var waveStateKeys = waveState.getKeys();
         
         for (var i = 0; i < waveStateKeys.length; i++) {
@@ -54,8 +61,9 @@ var syncroStack = {
     },
     
     dispatcher: function dispatcher(data) {
+        // save new command from local client in wave state
         if (data.action == "save") {
-            syncroStack._adapter.getState().submitValue(data.message.id, JSON.stringify(data.message));
+            syncroWave._adapter.getState().submitValue(data.message.id, JSON.stringify(data.message));
         }
     }
 }
