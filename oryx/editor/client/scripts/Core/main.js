@@ -567,8 +567,7 @@ ORYX.Editor = {
                 }
             });
         }
-        
-        
+		
         ORYX.availablePlugins.each(function(value) {
             ORYX.Log.debug("Initializing plugin '%0'", value.name);
                 if( (!value.requires    || !value.requires.namespaces   || value.requires.namespaces.any(function(req){ return loadedStencilSetsNamespaces.indexOf(req) >= 0; }) ) &&

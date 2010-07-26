@@ -27,7 +27,7 @@
  
 if (!ORYX.Plugins) 
     ORYX.Plugins = new Object();
-
+	
 ORYX.Plugins.Wave = Clazz.extend({
     facade: undefined,
     

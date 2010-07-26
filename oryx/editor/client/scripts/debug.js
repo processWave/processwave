@@ -40,6 +40,6 @@ loadFirebugConsole();
 // TODO only enable debugging, if firebug is really there
 // this doesn't work with Firebug 1.4.0a12
 //if(typeof loadFirebugConsole == 'function') {
-	ORYX_LOGLEVEL = ORYX_LOGLEVEL_WARN
+	ORYX_LOGLEVEL = ORYX_LOGLEVEL_DEBUG;
 //} 
 

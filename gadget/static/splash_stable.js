@@ -62,9 +62,29 @@ var splash = {
             return;
         }
         var stencilSet = wave.getState().get("stencilSet");
+        var importURL = wave.getState().get("wavethis_referer");
+        //var importURL = "http://oryx-project.org/backend/poem/model/9496/json"; //for testing (bpmn2.0-model)
         if (stencilSet) {
             splash.loadOryx(stencilSet);
+        } else if (importURL) {
+            var params = {};
+            params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+            gadgets.io.makeRequest(importURL, splash.processModelJSON, params); 
         } else {
+            splash.showStencilSetSelection();
+        }
+    },
+    
+    processModelJSON: function processModelJSON(obj) {
+        importJSON = obj.data;
+        stencilSetURL = importJSON.stencilset.url;
+        var stencilSet;
+        var match = stencilSetURL.match(/\/([^\/]+).json/);
+        if (match) {
+            stencilSet = match[1];
+            splash.loadOryx(stencilSet, importJSON);
+        } else {
+            // This should not happen, if it does show the stencilsetselection
             splash.showStencilSetSelection();
         }
     },
@@ -75,15 +95,14 @@ var splash = {
         gadgets.window.adjustHeight();
     },
 
-    loadOryx: function loadOryx(stencilSet) {
+    loadOryx: function loadOryx(stencilSet, importJSON) {
         wave.getState().submitValue("stencilSet", stencilSet);
         $("#stencilset-selection").hide();
         $("#splash-loading").show();
         splash.gStencilSetSelected = true;
         window.setTimeout(splash.changeStatusMessage, 1500);
-        
         var oryxUrl = splash.gOryxXhtmlPath + "?stencilSetName=" + stencilSet;
-        splash.loadJavaScriptsAndThenOryx(oryxUrl, stencilSet);
+        splash.loadJavaScriptsAndThenOryx(oryxUrl, stencilSet, importJSON);
     },
 
     changeStatusMessage: function changeStatusMessage() {
@@ -102,11 +121,14 @@ var splash = {
         gadgets.window.adjustHeight();
     },
     
-    loadJavaScriptsAndThenOryx: function loadJavaScriptsAndThenOryx(oryxUrl, stencilSet) {
-        $LAB.script(splash.gJavaScriptPath).wait(function javaScriptLoadDone() {
+    loadJavaScriptsAndThenOryx: function loadJavaScriptsAndThenOryx(oryxUrl, stencilSet, importJSON) {
+		$LAB.script(splash.gJavaScriptPath).wait(function javaScriptLoadDone() {
             adapter.initialize(true);
             stencilsetPolice.initialize(stencilSet);
             oryx.initialize();
+            if (typeof importJSON !== "undefined") {
+                oryx.sendMessage("oryx", "import", importJSON);
+            }
             $("#oryxFrame").attr("src", oryxUrl);
         });
     }

@@ -51,19 +51,19 @@ function initialize() {
     }
 }
 
-function loadJavaScriptsAndThenOryx(branchName, stencilSet) {
+function loadJavaScriptsAndThenOryx(branchName, stencilSet, importJSON) {
     var path = gRootPath + branchName + "/";
     var lab = $LAB;
     
     $LAB.script(path + "gadget/includes.js").wait(
         function loadIncludes() {
             for (var i = 0; i < gJavascripts.length; i++) {
-                lab = lab.script(path + gJavascripts[i]).wait(getAfterWaitFunction(path, stencilSet));
+                lab = lab.script(path + gJavascripts[i]).wait(getAfterWaitFunction(path, stencilSet, importJSON));
             }
         });
 }
 
-function getAfterWaitFunction(path, stencilSet) {
+function getAfterWaitFunction(path, stencilSet, importJSON) {
     return function afterWait() {
         gLoadedJavaScriptsCount++;
         if (gLoadedJavaScriptsCount === gJavascripts.length) {
@@ -71,7 +71,8 @@ function getAfterWaitFunction(path, stencilSet) {
             adapter.initialize(true);
             stencilsetPolice.initialize(stencilSet)
             oryx.initialize();
-            
+            // send the JSON that has to be imported to the ORYX
+            oryx.sendMessage("oryx", "import", importJSON);            
             //Load Oryx
             var url = path + "/gadget/oryx.xhtml?stencilSetName=" + stencilSet;
             $("#oryxFrame").attr("src",url);
@@ -85,17 +86,44 @@ function loadOryxBranch(branch, stencilSet) {
     window.setTimeout(changeStatusMessage, 1500);
     gBranchSelected = true;
     $("#branchName").prepend(branch);
-    
-    loadJavaScriptsAndThenOryx(branch, stencilSet)
-    
-    var dancingShapes = $("#dancingShapes").attr('checked') ? "yes" : "no";
-    
-    if (wave) {
-        wave.getState().submitValue("stencilSet", stencilSet);
-        wave.getState().submitValue("dancingShapes", dancingShapes);
-        wave.getState().submitValue("branchName", branch);
+    if (wave.getState().get("http_referer")) {
+        var referer = wave.getState().get("wavethis_referer");
+        //var referer = "http://oryx-project.org/backend/poem/model/9496/json"; 
+        var params = {};
+        params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+        gadgets.io.makeRequest(referer, processModelJSON, params); 
+    } else {
+        loadJavaScriptsAndThenOryx(branch, stencilSet);
+        
+        var dancingShapes = $("#dancingShapes").attr('checked') ? "yes" : "no";
+        
+        if (wave) {
+            wave.getState().submitValue("stencilSet", stencilSet);
+            wave.getState().submitValue("dancingShapes", dancingShapes);
+            wave.getState().submitValue("branchName", branch);
+        }
+        setCookie(branch, stencilSet, dancingShapes);
     }
-    setCookie(branch, stencilSet, dancingShapes);
+}
+
+function processModelJSON(obj) {
+    importJSON = obj.data;
+    stencilSetURL = importJSON.stencilset.url;
+    var stencilSet;
+    if (stencilSetURL.indexOf("bpmn2.0") != -1) {
+        stencilSet = "bpmn2.0";
+    } else if (stencilSetURL.indexOf("uml2.2") != -1) {
+		stencilSet = "uml2.2";
+	} else if (stencilSetURL.indexOf("fmcblockdiagram") != -1) {
+		stencilSet = "fmcblockdiagram";
+	}else if (stencilSetURL.indexOf("epc") != -1) {
+		stencilSet = "epc";
+	}else if (stencilSetURL.indexOf("petrinets") != -1) {
+		stencilSet = "petrinets";
+	}
+    // TODO: look for the following stencilsets: uml2.2, fmcblockdiagram, epc, petrinets
+    // regex for string before .json
+    loadJavaScriptsAndThenOryx("importWaveThis", stencilSet, importJSON);
 }
 
 function stateUpdatedCallback() {
@@ -107,7 +135,7 @@ function stateUpdatedCallback() {
     if(!gBranchSelected) {
         var branchName = wave.getState().get("branchName");
         if (branchName) {
-            var stencilSet = wave.getState().get("stencilSet") || "bpmn2.0"
+            var stencilSet = wave.getState().get("stencilSet") || "bpmn2.0";
             loadOryxBranch(branchName, stencilSet);
         } else {
             showManualBranchSelection();

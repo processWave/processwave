@@ -206,7 +206,7 @@ ORYX.Core.Math.getPointOfIntersectionPointLine = function(
 
 	/* 
 	 * [P3 - P1 - u(P2 - P1)] dot (P2 - P1) = 0
-	 * u =((x3-x1)(x2-x1)+(y3-y1)(y2-y1))/(p2-p1)Â²
+	 * u =((x3-x1)(x2-x1)+(y3-y1)(y2-y1))/(p2-p1)²
 	 */
 	var denominator = Math.pow(lineP2.x - lineP1.x, 2) 
 						+ Math.pow(lineP2.y - lineP1.y, 2);

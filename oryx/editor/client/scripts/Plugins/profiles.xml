@@ -32,6 +32,8 @@
         <plugin name="ORYX.Plugins.PropertyTab"/>
         <plugin name="ORYX.Plugins.Schlaumeier"/>
         <plugin name="ORYX.Plugins.DockerCreation"/>
+        <plugin name="ORYX.Plugins.ImportJSON"/>
+        <plugin name="ORYX.Plugins.JSONExport"/>       
        
     </profile>
     <profile name="simpleBPMN2.0" depends="default" stencilset="stencilsets/simpleBPMN2.0/simpleBPMN2.0.json">

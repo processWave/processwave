@@ -182,8 +182,7 @@ ORYX.Plugins.View = {
 	 * 		the factor to adjust the zoom level
 	 */
 	zoom: function(factor) {
-		// TODO: Zoomen auf allen Objekten im SVG-DOM
-		
+		// TODO: Zoomen auf allen Objekten im SVG-DOM        
 		this.zoomLevel *= factor;
 		var scrollNode 	= this.facade.getCanvas().getHTMLContainer().parentNode.parentNode;
 		var canvas 		= this.facade.getCanvas();

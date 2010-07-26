@@ -24,7 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
-
 var oryx = {
     _dispatcherFunctions: {},
     _oryxLoaded: false,
@@ -39,7 +38,6 @@ var oryx = {
 
         farbrausch.initialize();
         syncroWave.initialize();
-        
     },
     
     addMessageDispatcher: function addMessageDispatcher(target, dispatcherFunction) {
@@ -52,7 +50,6 @@ var oryx = {
         }
         
         var data = gadgets.json.parse(event.data);
-        
         if (data.target === "oryx" && data.action === "loaded") {
             // Oryx has loaded, send initial commands to Oryx
             oryx._oryxLoaded = true;

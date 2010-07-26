@@ -35,7 +35,7 @@ if (!ORYX.Plugins)
     
 ORYX.Plugins.SyncroOryx = Clazz.extend({
     facade: undefined,
-    debug: true, //Set to true to see Apply/Revert-Log in console
+    debug: false, //Set to true to see Apply/Revert-Log in console
     
     construct: function construct(facade) {
         this.facade = facade;

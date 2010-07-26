@@ -832,3 +832,9 @@ ORYX.I18N.Bpmn2_0Serialization.xpdlDownloadDesc = "Download the XPDL 2.2 based o
 if(!ORYX.I18N.Paint) ORYX.I18N.Paint = {};
 ORYX.I18N.Paint.paint = "Paint";
 ORYX.I18N.Paint.paintDesc = "Toggle Paint mode";
+
+/** New Language Properties 26.07.2010 */
+if(!ORYX.I18N.JSONExport) ORYX.I18N.JSONExport = {};
+ORYX.I18N.JSONExport.name = "JSON Export";
+ORYX.I18N.JSONExport.desc = "Export model to the ORYX editor";
+ORYX.I18N.JSONExport.group = "Export";
