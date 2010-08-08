@@ -8,7 +8,7 @@
 	<!doctype html>
 	<html>
         <head>
-        <script src="http://oryx.processwave.org/gadget/gadgetStatic.js" type="text/javascript" charset="utf-8"></script>
+        <script src="http://ddj0ahgq8zch6.cloudfront.net/gadget/gadgetStatic.js" type="text/javascript" charset="utf-8"></script>
         
         <style type="text/css">
             tr.zebra:nth-child(4n) {background-color: lightblue;}
@@ -50,7 +50,7 @@
             }
             
             .selection {
-                background-image: url(http://code.processwave.org/raw-file/feature-23-stencilset/gadget/static/selection.png);
+                background-image: url(http://ddj0ahgq8zch6.cloudfront.net/gadget/static/selection.png);
                 background-repeat: no-repeat;
             }
             
@@ -118,7 +118,7 @@
             <div id="splash-header" class="selection"></div>
             <div id="splash-loading" class="selection">
                 <div id="progressBar">
-                    <img src="http://oryx.processwave.org/gadget/static/ajax-loader.gif" /> 
+                    <img src="http://ddj0ahgq8zch6.cloudfront.net/gadget/static/ajax-loader.gif" /> 
                     <div id="statusMessage"></div>
                 </div>
             </div>

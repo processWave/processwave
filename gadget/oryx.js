@@ -45,7 +45,7 @@ var oryx = {
     },
     
     dispatchMessage: function dispatchMessage(event) {
-        if (event.origin !== "ddj0ahgq8zch6.cloudfront.net" && event.origin !== "http://code.processwave.org" && event.origin !== "http://oryx.processwave.org") {
+        if (event.origin !== "http://ddj0ahgq8zch6.cloudfront.net" && event.origin !== "http://code.processwave.org" && event.origin !== "http://oryx.processwave.org") {
             return;
         }
         

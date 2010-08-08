@@ -32,7 +32,6 @@
         <plugin name="ORYX.Plugins.PropertyTab"/>
         <plugin name="ORYX.Plugins.Schlaumeier"/>
         <plugin name="ORYX.Plugins.DockerCreation"/>
-        <plugin name="ORYX.Plugins.ImportJSON"/>
         <plugin name="ORYX.Plugins.JSONExport"/>       
        
     </profile>

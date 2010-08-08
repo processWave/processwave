@@ -82,6 +82,9 @@ ORYX.Plugins.Wave = Clazz.extend({
             if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
                 this.updateLablesForFirefox();
             }
+        } else if (data.target === "oryx" && data.action === "import") {
+			console.log("Import message received:" + data.message);
+            this.facade.importJSON(data.message, true);
         } else {
             this.facade.raiseEvent({
                 'type': ORYX.CONFIG.EVENT_NEW_POST_MESSAGE_RECEIVED,

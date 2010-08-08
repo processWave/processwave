@@ -27,8 +27,8 @@
 
 var splash = {
 
-    gOryxXhtmlPath: "http://oryx.processwave.org/gadget/oryx_stable.xhtml",
-    gJavaScriptPath: "http://oryx.processwave.org/gadget/gadgetDynamic.js",
+    gOryxXhtmlPath: "http://ddj0ahgq8zch6.cloudfront.net/gadget/oryx_stable.xhtml",
+    gJavaScriptPath: "http://ddj0ahgq8zch6.cloudfront.net/gadget/gadgetDynamic.js",
 
     gStatusMessages: [  "Loading core features", 
                         "Loading the user experience",
@@ -68,6 +68,7 @@ var splash = {
             splash.loadOryx(stencilSet);
         } else if (importURL) {
             var params = {};
+            importURL = importURL + "?" + Math.random();
             params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
             gadgets.io.makeRequest(importURL, splash.processModelJSON, params); 
         } else {
@@ -82,6 +83,10 @@ var splash = {
         var match = stencilSetURL.match(/\/([^\/]+).json/);
         if (match) {
             stencilSet = match[1];
+			if (stencilSet === "petrinet") {
+				stencilSet = "petrinets";
+				// For some reason, we use petrinets/petrinets.json, while Oryx uses the singular...
+			}
             splash.loadOryx(stencilSet, importJSON);
         } else {
             // This should not happen, if it does show the stencilsetselection

@@ -42,8 +42,7 @@
 		<plugin source="changelog.js" name="ORYX.Plugins.Changelog"/>
 		<plugin source="newshaperepository.js" name="ORYX.Plugins.NewShapeRepository"/>
         <plugin source="dockerCreation.js" name="ORYX.Plugins.DockerCreation" />
-        <plugin source="json_export.js" name="ORYX.Plugins.JSONExport" />
-        <plugin source="importJSON.js" name="ORYX.Plugins.ImportJSON" />        
+        <plugin source="json_export.js" name="ORYX.Plugins.JSONExport" />      
         
     <properties>
 		<property group="File" index="1" />
