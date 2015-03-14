@@ -1,0 +1,3 @@
+The processWave.org editor is a collaborative diagram editor for Google Wave. It allows multiple people to edit the same diagram at the same time. Currently, six diagram types are support: UML, BPMN, simpleBPMN, FMC, petri nets and EPC. Due to the open source nature of the project this list of supported stencil sets can easily be extended using the project's plug-in architecture. The processWave.org editor is based on the [ORYX project](http://code.google.com/p/oryx-editor/).
+
+Check out the [follow-up project](https://code.google.com/p/diagram-editor-for-google-plus/) integrating the processWave.org Editor into Google+ Hangouts!
