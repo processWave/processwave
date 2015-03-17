@@ -6,7 +6,7 @@ For details, screencasts, and screenshots check out our blog at [www.processWave
 
 # Team
 * [Michael Goderbauer](https://github.com/goderbauer)
-* Markus Götz
+* [Markus Götz](https://github.com/Markus-Goetz)
 * [Marvin Killing](https://github.com/mkilling)
 * [Martin Kreichgauer](https://github.com/kreichgauer)
 * [Martin Krüger](https://github.com/mkaydev)
